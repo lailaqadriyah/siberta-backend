@@ -11,14 +11,19 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    // UBAH BAGIAN INI: email diganti jadi username
     username: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: true // Username tidak boleh ada yang kembar
+        unique: true
     },
     password: {
         type: DataTypes.STRING,
+        allowNull: false
+    },
+    // ---- TAMBAHAN BARU: Menentukan peran user ----
+    role: {
+        type: DataTypes.ENUM('mahasiswa', 'dosen', 'admin'),
+        defaultValue: 'mahasiswa', // Defaultnya jika daftar adalah mahasiswa
         allowNull: false
     }
 }, {

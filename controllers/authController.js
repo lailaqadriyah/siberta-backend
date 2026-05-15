@@ -5,8 +5,8 @@ const jwt = require('jsonwebtoken');
 // Fungsi untuk Register
 const register = async (req, res) => {
     try {
-        // Ubah email jadi username
-        const { nama, username, password } = req.body;
+        // Menerima input 'role' (bisa 'mahasiswa', 'dosen', atau 'admin')
+        const { nama, username, password, role } = req.body;
 
         // Cek username
         const userMngkinAda = await User.findOne({ where: { username } });
@@ -17,13 +17,23 @@ const register = async (req, res) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
 
+        // Simpan user baru ke database
         const userBaru = await User.create({
             nama,
-            username, // Simpan username
-            password: hashedPassword
+            username,
+            password: hashedPassword,
+            role: role || 'mahasiswa' // Default ke mahasiswa jika tidak diisi
         });
 
-        res.status(201).json({ pesan: "Registrasi berhasil!", data: { id: userBaru.id, nama: userBaru.nama, username: userBaru.username } });
+        res.status(201).json({ 
+            pesan: "Registrasi berhasil!", 
+            data: { 
+                id: userBaru.id, 
+                nama: userBaru.nama, 
+                username: userBaru.username, 
+                role: userBaru.role 
+            } 
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ pesan: "Terjadi kesalahan pada server" });
@@ -33,10 +43,8 @@ const register = async (req, res) => {
 // Fungsi untuk Login
 const login = async (req, res) => {
     try {
-        // Ambil username dari request frontend
         const { username, password } = req.body;
 
-        // Cari berdasarkan username
         const user = await User.findOne({ where: { username } });
         if (!user) {
             return res.status(404).json({ pesan: "Username tidak ditemukan!" });
@@ -47,8 +55,9 @@ const login = async (req, res) => {
             return res.status(401).json({ pesan: "Password salah!" });
         }
 
+        // Masukkan 'role' ke dalam payload Token JWT
         const token = jwt.sign(
-            { id: user.id, username: user.username }, 
+            { id: user.id, username: user.username, role: user.role }, 
             process.env.JWT_SECRET, 
             { expiresIn: '1d' }
         );
@@ -56,7 +65,12 @@ const login = async (req, res) => {
         res.status(200).json({ 
             pesan: "Login berhasil!", 
             token: token,
-            user: { id: user.id, nama: user.nama, username: user.username }
+            user: { 
+                id: user.id, 
+                nama: user.nama, 
+                username: user.username, 
+                role: user.role 
+            }
         });
 
     } catch (error) {

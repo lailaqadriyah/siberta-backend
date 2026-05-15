@@ -1,29 +1,52 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const sequelize = require('./config/database'); // Import koneksi
-const User = require('./models/User'); // Import model User
 
+// Import Database & Models
+const sequelize = require('./config/database'); 
+const User = require('./models/User'); 
+const TugasAkhir = require('./models/TugasAkhir'); 
+const Pengajuan = require('./models/Pengajuan'); 
+
+// Import Routes
 const authRoutes = require('./routes/authRoutes');
-const TugasAkhir = require('./models/TugasAkhir'); // Import model baru agar otomatis dibuat di MySQL
 const taRoutes = require('./routes/taRoutes');
+const pengajuanRoutes = require('./routes/pengajuanRoutes'); // <-- Import route pengajuan
 
-const app = express();
+const app = express(); // <-- Ini inisialisasi app-nya
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
+// ==========================================
+// DEFINISI RELASI ANTAR TABEL (ASSOCIATIONS)
+// ==========================================
 
-app.use('/api/auth', authRoutes);
+// Relasi Mahasiswa -> Pengajuan (1 to Many)
+User.hasMany(Pengajuan, { as: 'pengajuan_saya', foreignKey: 'mahasiswa_id' });
+Pengajuan.belongsTo(User, { as: 'mahasiswa', foreignKey: 'mahasiswa_id' });
+
+// Relasi Dosen Pembimbing 1 -> Pengajuan
+User.hasMany(Pengajuan, { as: 'bimbingan_p1', foreignKey: 'pembimbing1_id' });
+Pengajuan.belongsTo(User, { as: 'pembimbing1', foreignKey: 'pembimbing1_id' });
+
+// Relasi Dosen Pembimbing 2 -> Pengajuan
+User.hasMany(Pengajuan, { as: 'bimbingan_p2', foreignKey: 'pembimbing2_id' });
+Pengajuan.belongsTo(User, { as: 'pembimbing2', foreignKey: 'pembimbing2_id' });
+
+// ==========================================
+
+// Gunakan Routes (Harus ditaruh di bawah app = express())
 app.use('/api/auth', authRoutes);
 app.use('/api/ta', taRoutes);
+app.use('/api/pengajuan', pengajuanRoutes); // <-- Penggunaan route pengajuan
 
 // Tes Koneksi & Sinkronisasi Database
 sequelize.authenticate()
     .then(() => {
         console.log('Berhasil terhubung ke database MySQL!');
-        // sync({ alter: true }) akan otomatis mengupdate tabel jika ada perubahan di Model
         return sequelize.sync({ alter: true }); 
     })
     .then(() => {
