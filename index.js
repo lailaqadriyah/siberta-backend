@@ -12,6 +12,9 @@ const Pengajuan = require('./models/Pengajuan');
 const authRoutes = require('./routes/authRoutes');
 const taRoutes = require('./routes/taRoutes');
 const pengajuanRoutes = require('./routes/pengajuanRoutes'); // <-- Import route pengajuan
+const reviewRoutes = require('./routes/reviewRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const fileController = require('./controllers/fileController');
 
 const app = express(); // <-- Ini inisialisasi app-nya
 const PORT = process.env.PORT || 5000;
@@ -42,6 +45,12 @@ Pengajuan.belongsTo(User, { as: 'pembimbing2', foreignKey: 'pembimbing2_id' });
 app.use('/api/auth', authRoutes);
 app.use('/api/ta', taRoutes);
 app.use('/api/pengajuan', pengajuanRoutes); // <-- Penggunaan route pengajuan
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Static download route for uploaded files (protected)
+const { verifyToken } = require('./middleware/authMiddleware');
+app.get('/api/files/:id/download', verifyToken, fileController.downloadFile);
 
 // Tes Koneksi & Sinkronisasi Database
 sequelize.authenticate()
