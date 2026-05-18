@@ -79,4 +79,19 @@ const login = async (req, res) => {
     }
 };
 
-module.exports = { register, login };
+// Tambahkan fungsi ini
+const getDosen = async (req, res) => {
+    try {
+        const dosen = await User.findAll({ 
+            where: { role: 'dosen' },
+            attributes: ['id', 'nama', 'username'] // Jangan kirim password!
+        });
+        res.status(200).json({ data: dosen });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ pesan: "Gagal mengambil data dosen" });
+    }
+};
+
+// Jangan lupa update export-nya menjadi seperti ini:
+module.exports = { register, login, getDosen };
