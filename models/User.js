@@ -20,15 +20,16 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING,
         allowNull: false
     },
-    // ---- TAMBAHAN BARU: Menentukan peran user ----
     role: {
-        type: DataTypes.ENUM('mahasiswa', 'dosen', 'admin'),
-        defaultValue: 'mahasiswa', // Defaultnya jika daftar adalah mahasiswa
+        type: DataTypes.STRING(20),
+        defaultValue: 'mahasiswa',
         allowNull: false
     }
 }, {
     tableName: 'users',
-    timestamps: true
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = User;

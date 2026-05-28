@@ -16,7 +16,7 @@ const AuditLog = sequelize.define('AuditLog', {
     allowNull: false
   },
   details: {
-    type: DataTypes.JSONB,
+    type: sequelize.getDialect() === 'postgres' ? DataTypes.JSONB : DataTypes.JSON,
     allowNull: true
   }
 }, {

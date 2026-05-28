@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --runInBand",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "db:migrate": "sequelize-cli db:migrate",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo",
+    "db:seed": "sequelize-cli db:seed:all",
+    "db:seed:undo": "sequelize-cli db:seed:undo:all"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +27,8 @@
     "sequelize": "^6.37.8"
   },
   "devDependencies": {
+    "jest": "^29.6.1",
     "nodemon": "^3.1.14",
-    "jest": "^29.6.1"
+    "sequelize-cli": "^6.6.5"
   }
 }

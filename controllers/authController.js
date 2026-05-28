@@ -84,7 +84,7 @@ const getDosen = async (req, res) => {
     try {
         const dosen = await User.findAll({ 
             where: { role: 'dosen' },
-            attributes: ['id', 'nama', 'username'] // Jangan kirim password!
+            attributes: ['id', 'nama', 'username', 'role'] // Sertakan role untuk filter di frontend
         });
         res.status(200).json({ data: dosen });
     } catch (error) {

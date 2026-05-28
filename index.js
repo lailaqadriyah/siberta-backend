@@ -28,8 +28,8 @@ app.use(express.json());
 // ==========================================
 
 // Relasi Mahasiswa -> Pengajuan (1 to Many)
-User.hasMany(Pengajuan, { as: 'pengajuan_saya', foreignKey: 'mahasiswa_id' });
-Pengajuan.belongsTo(User, { as: 'mahasiswa', foreignKey: 'mahasiswa_id' });
+User.hasMany(Pengajuan, { as: 'pengajuan_saya', foreignKey: 'student_id' });
+Pengajuan.belongsTo(User, { as: 'mahasiswa', foreignKey: 'student_id' });
 
 // Relasi Dosen Pembimbing 1 -> Pengajuan
 User.hasMany(Pengajuan, { as: 'bimbingan_p1', foreignKey: 'pembimbing1_id' });
@@ -56,10 +56,7 @@ app.get('/api/files/:id/download', verifyToken, fileController.downloadFile);
 sequelize.authenticate()
     .then(() => {
         console.log('Berhasil terhubung ke database MySQL!');
-        return sequelize.sync({ alter: true }); 
-    })
-    .then(() => {
-        console.log('Tabel berhasil disinkronisasi.');
+        console.log('Schema database dikelola melalui Sequelize CLI migrations.');
     })
     .catch((err) => {
         console.error('Gagal terhubung ke database:', err);

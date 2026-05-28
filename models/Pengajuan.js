@@ -28,15 +28,15 @@ const Pengajuan = sequelize.define('Pengajuan', {
         allowNull: true
     },
     file_pendukung: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(1024),
         allowNull: true
     },
     status: {
-        type: DataTypes.ENUM('draft', 'submitted', 'revisi', 'setuju', 'ditolak', 'validated'),
+        type: DataTypes.STRING(32),
         defaultValue: 'draft'
     },
     similarity_score: {
-        type: DataTypes.FLOAT,
+        type: DataTypes.DOUBLE,
         allowNull: true
     },
     sbert_vector_id: {
@@ -47,11 +47,11 @@ const Pengajuan = sequelize.define('Pengajuan', {
         type: DataTypes.TEXT,
         allowNull: true
     }
-    // Catatan: Kolom relasi seperti id_mahasiswa dan id_dosen 
-    // akan dibuat otomatis oleh Sequelize di Langkah 3.
 }, {
     tableName: 'pengajuan',
-    timestamps: true
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = Pengajuan;

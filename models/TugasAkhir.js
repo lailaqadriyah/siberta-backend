@@ -8,7 +8,7 @@ const TugasAkhir = sequelize.define('TugasAkhir', {
         autoIncrement: true
     },
     judul: {
-        type: DataTypes.TEXT, // Pakai TEXT karena judul TA bisa sangat panjang
+        type: DataTypes.TEXT,
         allowNull: false
     },
     penulis: {
@@ -21,7 +21,9 @@ const TugasAkhir = sequelize.define('TugasAkhir', {
     }
 }, {
     tableName: 'tugas_akhir',
-    timestamps: true
+    timestamps: true,
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
 });
 
 module.exports = TugasAkhir;

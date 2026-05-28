@@ -12,7 +12,7 @@ const Department = sequelize.define('Department', {
     allowNull: false
   },
   ml_model_version: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(64),
     allowNull: true
   },
   last_synced_at: {
@@ -21,7 +21,9 @@ const Department = sequelize.define('Department', {
   }
 }, {
   tableName: 'departments',
-  timestamps: true
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
 
 module.exports = Department;

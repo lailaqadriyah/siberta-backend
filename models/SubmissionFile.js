@@ -12,15 +12,15 @@ const SubmissionFile = sequelize.define('SubmissionFile', {
     allowNull: false
   },
   filename: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(512),
     allowNull: false
   },
   storage_path: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(1024),
     allowNull: false
   },
   mime: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(128),
     allowNull: true
   },
   uploaded_by: {

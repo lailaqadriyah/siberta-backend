@@ -16,7 +16,7 @@ const Review = sequelize.define('Review', {
     allowNull: false
   },
   decision: {
-    type: DataTypes.ENUM('setuju', 'revisi', 'tolak'),
+    type: DataTypes.STRING(16),
     allowNull: false
   },
   comment: {
@@ -24,7 +24,7 @@ const Review = sequelize.define('Review', {
     allowNull: true
   },
   score: {
-    type: DataTypes.FLOAT,
+    type: DataTypes.DOUBLE,
     allowNull: true
   }
 }, {
