@@ -24,6 +24,34 @@ const User = sequelize.define('User', {
         type: DataTypes.STRING(20),
         defaultValue: 'mahasiswa',
         allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    nim: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    prodi: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    angkatan: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    pembimbing: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    status: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    avatar: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     tableName: 'users',

@@ -1,4 +1,5 @@
 const Pengajuan = require('../models/Pengajuan');
+const User = require('../models/User');
 const Review = require('../models/Review');
 const SubmissionFile = require('../models/SubmissionFile');
 const { Op } = require('sequelize');
@@ -69,10 +70,103 @@ const listSubmissions = async (req, res) => {
             where[Op.or] = [{ pembimbing1_id: uid }, { pembimbing2_id: uid }];
         }
 
-        const subs = await Pengajuan.findAll({ where, order: [['created_at', 'DESC']] });
-        return res.status(200).json({ data: subs });
+        const subs = await Pengajuan.findAll({
+            where,
+            order: [['created_at', 'DESC']],
+            include: [
+                {
+                    model: User,
+                    as: 'mahasiswa',
+                    attributes: ['id', 'nama', 'username']
+                }
+            ]
+        });
+        const submissionIds = subs.map((item) => item.id);
+
+        let latestReviewBySubmission = {};
+        if (submissionIds.length > 0) {
+            const reviews = await Review.findAll({
+                where: { submission_id: submissionIds },
+                order: [['created_at', 'DESC']]
+            });
+
+            reviews.forEach((review) => {
+                if (!latestReviewBySubmission[review.submission_id]) {
+                    latestReviewBySubmission[review.submission_id] = review;
+                }
+            });
+        }
+
+        const data = subs.map((item) => {
+            const submission = item.toJSON();
+            const review = latestReviewBySubmission[item.id];
+
+            return {
+                ...submission,
+                last_review_comment: review?.comment || null,
+                last_review_decision: review?.decision || null,
+                last_reviewed_at: review?.created_at || null
+            };
+        });
+
+        return res.status(200).json({ data });
     } catch (error) {
         console.error('Error listSubmissions:', error);
+        return res.status(500).json({ pesan: 'Terjadi kesalahan server.' });
+    }
+};
+
+const updateSubmission = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const submission = await Pengajuan.findByPk(id);
+
+        if (!submission) {
+            return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
+        }
+
+        if (submission.student_id !== req.user.id) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses mengubah pengajuan ini.' });
+        }
+
+        const { judul, abstract, pembimbing1_id, pembimbing2_id } = req.body;
+
+        if (judul !== undefined && !String(judul).trim()) {
+            return res.status(400).json({ pesan: 'Judul tidak boleh kosong.' });
+        }
+
+        if (judul !== undefined) submission.judul = judul;
+        if (abstract !== undefined) submission.abstract = abstract;
+        if (pembimbing1_id !== undefined) submission.pembimbing1_id = pembimbing1_id || null;
+        if (pembimbing2_id !== undefined) submission.pembimbing2_id = pembimbing2_id || null;
+
+        await submission.save();
+
+        return res.status(200).json({ pesan: 'Pengajuan berhasil diperbarui.', data: submission });
+    } catch (error) {
+        console.error('Error updateSubmission:', error);
+        return res.status(500).json({ pesan: 'Terjadi kesalahan server.' });
+    }
+};
+
+const deleteSubmission = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const submission = await Pengajuan.findByPk(id);
+
+        if (!submission) {
+            return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
+        }
+
+        if (submission.student_id !== req.user.id) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses menghapus pengajuan ini.' });
+        }
+
+        await submission.destroy();
+
+        return res.status(200).json({ pesan: 'Pengajuan berhasil dihapus.' });
+    } catch (error) {
+        console.error('Error deleteSubmission:', error);
         return res.status(500).json({ pesan: 'Terjadi kesalahan server.' });
     }
 };
@@ -132,4 +226,12 @@ const simulateSubmission = async (req, res) => {
     }
 };
 
-module.exports = { ajukanJudul, getSubmission, listSubmissions, uploadFile, simulateSubmission };
+module.exports = {
+    ajukanJudul,
+    getSubmission,
+    listSubmissions,
+    updateSubmission,
+    deleteSubmission,
+    uploadFile,
+    simulateSubmission
+};

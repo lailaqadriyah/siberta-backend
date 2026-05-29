@@ -69,7 +69,14 @@ const login = async (req, res) => {
                 id: user.id, 
                 nama: user.nama, 
                 username: user.username, 
-                role: user.role 
+                role: user.role,
+                email: user.email,
+                nim: user.nim,
+                prodi: user.prodi,
+                angkatan: user.angkatan,
+                pembimbing: user.pembimbing,
+                status: user.status,
+                avatar: user.avatar
             }
         });
 
@@ -93,5 +100,73 @@ const getDosen = async (req, res) => {
     }
 };
 
+const getMe = async (req, res) => {
+    try {
+        const user = await User.findByPk(req.user.id, {
+            attributes: ['id', 'nama', 'username', 'role', 'email', 'nim', 'prodi', 'angkatan', 'pembimbing', 'status', 'avatar']
+        });
+
+        if (!user) {
+            return res.status(404).json({ pesan: 'User tidak ditemukan.' });
+        }
+
+        res.status(200).json({ user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ pesan: 'Gagal mengambil profil.' });
+    }
+};
+
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { password } = req.body;
+
+        const allowedFields = ['nama', 'username', 'email', 'nim', 'prodi', 'angkatan', 'pembimbing', 'status', 'avatar'];
+        const updates = {};
+
+        allowedFields.forEach((field) => {
+            if (req.body[field] !== undefined) {
+                updates[field] = req.body[field];
+            }
+        });
+
+        if (updates.nama !== undefined && !String(updates.nama).trim()) {
+            return res.status(400).json({ pesan: 'Nama tidak boleh kosong.' });
+        }
+
+        if (updates.username !== undefined && !String(updates.username).trim()) {
+            return res.status(400).json({ pesan: 'Username tidak boleh kosong.' });
+        }
+
+        if (updates.username) {
+            const existing = await User.findOne({ where: { username: updates.username } });
+            if (existing && existing.id !== userId) {
+                return res.status(400).json({ pesan: 'Username sudah digunakan!' });
+            }
+        }
+
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            updates.password = await bcrypt.hash(password, salt);
+        }
+
+        if (Object.keys(updates).length === 0) {
+            return res.status(400).json({ pesan: 'Tidak ada perubahan yang dikirim.' });
+        }
+
+        await User.update(updates, { where: { id: userId } });
+
+        const updated = await User.findByPk(userId, {
+            attributes: ['id', 'nama', 'username', 'role', 'email', 'nim', 'prodi', 'angkatan', 'pembimbing', 'status', 'avatar']
+        });
+
+        res.status(200).json({ pesan: 'Profil berhasil diperbarui.', user: updated });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ pesan: 'Gagal memperbarui profil.' });
+    }
+};
+
 // Jangan lupa update export-nya menjadi seperti ini:
-module.exports = { register, login, getDosen };
+module.exports = { register, login, getDosen, getMe, updateProfile };

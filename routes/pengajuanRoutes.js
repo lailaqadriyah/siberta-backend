@@ -1,7 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const { ajukanJudul, getSubmission, listSubmissions, uploadFile, simulateSubmission } = require('../controllers/pengajuanController');
+const {
+	ajukanJudul,
+	getSubmission,
+	listSubmissions,
+	updateSubmission,
+	deleteSubmission,
+	uploadFile,
+	simulateSubmission
+} = require('../controllers/pengajuanController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { isMahasiswa } = require('../middleware/roleMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -18,6 +26,12 @@ router.get('/', verifyToken, listSubmissions);
 
 // Dapatkan detail pengajuan
 router.get('/:id', verifyToken, getSubmission);
+
+// Update pengajuan (mahasiswa pemilik)
+router.put('/:id', verifyToken, isMahasiswa, updateSubmission);
+
+// Hapus pengajuan (mahasiswa pemilik)
+router.delete('/:id', verifyToken, isMahasiswa, deleteSubmission);
 
 // Dapatkan reviews untuk pengajuan tertentu
 router.get('/:id/reviews', verifyToken, async (req, res) => {
