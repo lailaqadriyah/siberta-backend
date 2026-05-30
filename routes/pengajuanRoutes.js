@@ -8,8 +8,9 @@ const {
 	updateSubmission,
 	deleteSubmission,
 	uploadFile,
-	simulateSubmission
-} = require('../controllers/pengajuanController');
+	simulateSubmission,
+	getSubmissionReviews
+	} = require('../controllers/pengajuanController');
 const { verifyToken } = require('../middleware/authMiddleware');
 const { isMahasiswa } = require('../middleware/roleMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -34,15 +35,10 @@ router.put('/:id', verifyToken, isMahasiswa, updateSubmission);
 router.delete('/:id', verifyToken, isMahasiswa, deleteSubmission);
 
 // Dapatkan reviews untuk pengajuan tertentu
-router.get('/:id/reviews', verifyToken, async (req, res) => {
-	const Review = require('../models/Review');
-	const id = parseInt(req.params.id, 10);
-	const reviews = await Review.findAll({ where: { submission_id: id } });
-	res.json({ data: reviews });
-});
+router.get('/:id/reviews', verifyToken, getSubmissionReviews);
 
 // Upload file untuk submission
-router.post('/:id/upload', verifyToken, upload.single('file_pendukung'), uploadFile);
+router.post('/:id/upload', verifyToken, isMahasiswa, upload.single('file_pendukung'), uploadFile);
 
 // Simulasi kemiripan untuk submission
 router.post('/:id/simulate', verifyToken, simulateSubmission);

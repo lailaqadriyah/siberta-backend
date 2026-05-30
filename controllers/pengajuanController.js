@@ -4,15 +4,29 @@ const Review = require('../models/Review');
 const SubmissionFile = require('../models/SubmissionFile');
 const { Op } = require('sequelize');
 
+const canAccessSubmission = (submission, user) => {
+    const role = (user?.role || '').toLowerCase();
+
+    if (role === 'admin' || role === 'departemen') return true;
+    if (role === 'mahasiswa') return submission.student_id === user.id;
+    if (role === 'dosen') {
+        return submission.pembimbing1_id === user.id || submission.pembimbing2_id === user.id;
+    }
+
+    return false;
+};
+
 const ajukanJudul = async (req, res) => {
     try {
-        const { judul, pembimbing1_id, pembimbing2_id, abstract } = req.body;
+        const { judul, pembimbing1_id, pembimbing2_id, abstract, ringkasan } = req.body;
         const student_id = req.user.id; // Didapatkan dari token JWT
 
         // Validasi input
-        if (!judul || !pembimbing1_id || !pembimbing2_id) {
-            return res.status(400).json({ pesan: "Judul dan kedua dosen pembimbing wajib diisi!" });
+        if (!judul || !pembimbing1_id) {
+            return res.status(400).json({ pesan: 'Judul dan pembimbing 1 wajib diisi!' });
         }
+
+        const normalizedAbstract = abstract !== undefined ? abstract : ringkasan;
 
         // Cek apakah ada file yang diunggah
         let file_pendukung = null;
@@ -24,7 +38,7 @@ const ajukanJudul = async (req, res) => {
         const pengajuanBaru = await Pengajuan.create({
             student_id,
             judul,
-            abstract,
+            abstract: normalizedAbstract,
             pembimbing1_id,
             pembimbing2_id,
             file_pendukung
@@ -46,6 +60,10 @@ const getSubmission = async (req, res) => {
         const id = parseInt(req.params.id, 10);
         const sub = await Pengajuan.findByPk(id);
         if (!sub) return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
+
+        if (!canAccessSubmission(sub, req.user)) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses ke pengajuan ini.' });
+        }
 
         const reviews = await Review.findAll({ where: { submission_id: id } });
         const files = await SubmissionFile.findAll({ where: { submission_id: id } });
@@ -177,6 +195,10 @@ const uploadFile = async (req, res) => {
         const submission = await Pengajuan.findByPk(id);
         if (!submission) return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
 
+        if (!canAccessSubmission(submission, req.user)) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses ke pengajuan ini.' });
+        }
+
         if (!req.file) return res.status(400).json({ pesan: 'File tidak ditemukan di request.' });
 
         const fileRecord = await SubmissionFile.create({
@@ -203,6 +225,10 @@ const simulateSubmission = async (req, res) => {
         const submission = await Pengajuan.findByPk(id);
         if (!submission) return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
 
+        if (!canAccessSubmission(submission, req.user)) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses ke pengajuan ini.' });
+        }
+
         // Panggil ML service
         const axios = require('axios');
         const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
@@ -226,6 +252,24 @@ const simulateSubmission = async (req, res) => {
     }
 };
 
+const getSubmissionReviews = async (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        const submission = await Pengajuan.findByPk(id);
+        if (!submission) return res.status(404).json({ pesan: 'Pengajuan tidak ditemukan.' });
+
+        if (!canAccessSubmission(submission, req.user)) {
+            return res.status(403).json({ pesan: 'Tidak memiliki akses ke pengajuan ini.' });
+        }
+
+        const reviews = await Review.findAll({ where: { submission_id: id } });
+        return res.status(200).json({ data: reviews });
+    } catch (error) {
+        console.error('Error getSubmissionReviews:', error);
+        return res.status(500).json({ pesan: 'Terjadi kesalahan server.' });
+    }
+};
+
 module.exports = {
     ajukanJudul,
     getSubmission,
@@ -233,5 +277,6 @@ module.exports = {
     updateSubmission,
     deleteSubmission,
     uploadFile,
-    simulateSubmission
+    simulateSubmission,
+    getSubmissionReviews
 };

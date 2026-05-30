@@ -21,7 +21,21 @@ const checkRole = (roleYangDiizinkan) => {
 // Buat 3 middleware spesifik agar mudah dipanggil di routes
 const isMahasiswa = checkRole('mahasiswa');
 const isDosen = checkRole('dosen');
-const isAdmin = checkRole('admin');
+const isAdmin = (req, res, next) => {
+    const role = (req.user?.role || '').toLowerCase();
+
+    if (!role) {
+        return res.status(401).json({ pesan: 'Akses ditolak! Anda belum login.' });
+    }
+
+    if (role !== 'admin' && role !== 'departemen') {
+        return res.status(403).json({
+            pesan: 'Akses ditolak! Halaman ini hanya untuk admin/departemen.'
+        });
+    }
+
+    return next();
+};
 
 // Export menggunakan kurung kurawal
 module.exports = { isMahasiswa, isDosen, isAdmin };
