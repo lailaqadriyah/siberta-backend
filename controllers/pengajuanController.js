@@ -3,6 +3,8 @@ const User = require('../models/User');
 const Review = require('../models/Review');
 const { Op } = require('sequelize');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
 
 const ML_URL = process.env.ML_SERVICE_URL || 'http://127.0.0.1:8000';
 const VALID_TEMA = ['EA', 'BI', 'ML', 'SPK', 'ERP'];
@@ -22,6 +24,14 @@ const normalizeScore = (score) => {
 };
 
 const normalizeTitle = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+
+const parseFilePendukung = (fileField) => {
+    if (!fileField) return { filename: null, originalName: null };
+    const parts = fileField.split('|');
+    const filename = parts[0];
+    const originalName = parts[1] || parts[0];
+    return { filename, originalName };
+};
 
 const assignedAdvisorIds = (submission) => {
     return [submission.pembimbing1_id, submission.pembimbing2_id]
@@ -168,7 +178,7 @@ const enrichSubmissions = async (submissions, user) => {
             files: [],
             legacy_file: submission.file_pendukung
                 ? {
-                    filename: submission.file_pendukung,
+                    filename: parseFilePendukung(submission.file_pendukung).originalName,
                     is_legacy: true
                 }
                 : null,
@@ -224,7 +234,7 @@ const ajukanJudul = async (req, res) => {
         }
 
         const normalizedAbstract = abstract !== undefined ? abstract : ringkasan;
-        const file_pendukung = req.file ? req.file.filename : null;
+        const file_pendukung = req.file ? `${req.file.filename}|${req.file.originalname}` : null;
 
         const pengajuanBaru = await Pengajuan.create({
             student_id,
@@ -342,7 +352,7 @@ const updateSubmission = async (req, res) => {
             return res.status(403).json({ pesan: 'Tidak memiliki akses mengubah pengajuan ini.' });
         }
 
-        const { judul, abstract, pembimbing1_id, pembimbing2_id, tema, similarity_score } = req.body;
+        const { judul, abstract, pembimbing1_id, pembimbing2_id, tema, similarity_score, file_pendukung } = req.body;
 
         if (judul !== undefined && !String(judul).trim()) {
             return res.status(400).json({ pesan: 'Judul tidak boleh kosong.' });
@@ -364,6 +374,21 @@ const updateSubmission = async (req, res) => {
         if (abstract !== undefined) submission.abstract = abstract;
         if (pembimbing1_id !== undefined) submission.pembimbing1_id = pembimbing1_id || null;
         if (pembimbing2_id !== undefined) submission.pembimbing2_id = pembimbing2_id || null;
+        
+        if (file_pendukung !== undefined) {
+            if (file_pendukung === null && submission.file_pendukung) {
+                const parsed = parseFilePendukung(submission.file_pendukung);
+                const oldFilePath = path.resolve('uploads', parsed.filename);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                    } catch (err) {
+                        console.error('Gagal menghapus file fisik:', err);
+                    }
+                }
+            }
+            submission.file_pendukung = file_pendukung;
+        }
 
         if (
             submission.pembimbing1_id &&
@@ -399,6 +424,18 @@ const deleteSubmission = async (req, res) => {
             return res.status(403).json({ pesan: 'Tidak memiliki akses menghapus pengajuan ini.' });
         }
 
+        if (submission.file_pendukung) {
+            const parsed = parseFilePendukung(submission.file_pendukung);
+            const oldFilePath = path.resolve('uploads', parsed.filename);
+            if (fs.existsSync(oldFilePath)) {
+                try {
+                    fs.unlinkSync(oldFilePath);
+                } catch (err) {
+                    console.error('Gagal menghapus file fisik:', err);
+                }
+            }
+        }
+
         await submission.destroy();
 
         return res.status(200).json({ pesan: 'Pengajuan berhasil dihapus.' });
@@ -420,14 +457,26 @@ const uploadFile = async (req, res) => {
 
         if (!req.file) return res.status(400).json({ pesan: 'File tidak ditemukan di request.' });
 
-        submission.file_pendukung = req.file.filename;
+        if (submission.file_pendukung) {
+            const parsed = parseFilePendukung(submission.file_pendukung);
+            const oldFilePath = path.resolve('uploads', parsed.filename);
+            if (fs.existsSync(oldFilePath)) {
+                try {
+                    fs.unlinkSync(oldFilePath);
+                } catch (err) {
+                    console.error('Gagal menghapus file lama saat upload:', err);
+                }
+            }
+        }
+
+        submission.file_pendukung = `${req.file.filename}|${req.file.originalname}`;
         await submission.save();
 
         return res.status(201).json({
             pesan: 'File berhasil diunggah.',
             data: {
                 submission_id: id,
-                filename: submission.file_pendukung,
+                filename: req.file.originalname,
                 is_legacy: true
             }
         });

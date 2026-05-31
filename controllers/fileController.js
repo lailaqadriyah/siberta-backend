@@ -27,7 +27,12 @@ const downloadSubmissionFile = async (req, res) => {
       return res.status(403).json({ pesan: 'Tidak memiliki akses ke file ini.' });
     }
 
-    return res.sendFile(path.resolve('uploads', submission.file_pendukung));
+    const parts = submission.file_pendukung.split('|');
+    const diskFilename = parts[0];
+    const originalFilename = parts[1] || parts[0];
+
+    const filePath = path.resolve('uploads', diskFilename);
+    return res.download(filePath, originalFilename);
   } catch (error) {
     console.error('Error downloadSubmissionFile:', error);
     return res.status(500).json({ pesan: 'Terjadi kesalahan server.' });
