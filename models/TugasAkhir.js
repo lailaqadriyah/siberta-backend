@@ -18,6 +18,18 @@ const TugasAkhir = sequelize.define('TugasAkhir', {
     tahun: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    tema: {
+        type: DataTypes.STRING(16),
+        allowNull: true
+    },
+    similarity_score: {
+        type: DataTypes.DOUBLE,
+        allowNull: true
+    },
+    pengajuan_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
 }, {
     tableName: 'tugas_akhir',

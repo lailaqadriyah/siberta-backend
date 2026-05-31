@@ -15,6 +15,10 @@ const Pengajuan = sequelize.define('Pengajuan', {
         type: DataTypes.TEXT,
         allowNull: true
     },
+    tema: {
+        type: DataTypes.STRING(16),
+        allowNull: true
+    },
     student_id: {
         type: DataTypes.INTEGER,
         allowNull: true
@@ -39,14 +43,6 @@ const Pengajuan = sequelize.define('Pengajuan', {
         type: DataTypes.DOUBLE,
         allowNull: true
     },
-    sbert_vector_id: {
-        type: DataTypes.STRING,
-        allowNull: true
-    },
-    komentar: {
-        type: DataTypes.TEXT,
-        allowNull: true
-    }
 }, {
     tableName: 'pengajuan',
     timestamps: true,

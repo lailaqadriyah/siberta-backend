@@ -316,11 +316,3 @@ paths:
       responses:
         '201':
           description: User created
-  /api/admin/sync-ml:
-    post:
-      summary: Trigger sync from SQL DB -> ML (.pkl)
-      security:
-        - bearerAuth: []
-      responses:
-        '202':
-          description: Sync job started

@@ -11,7 +11,4 @@ router.post('/cek', authMiddleware.verifyToken, taController.cekKemiripan);
 // Hanya admin yang bisa tambah data ke ML service
 router.post('/tambah', authMiddleware.verifyToken, isAdmin, taController.tambahData);
 
-// Hanya admin yang bisa trigger sync ulang ML service
-router.get('/sync', authMiddleware.verifyToken, isAdmin, taController.syncData);
-
 module.exports = router;

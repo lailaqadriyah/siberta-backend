@@ -22,10 +22,6 @@ const Review = sequelize.define('Review', {
   comment: {
     type: DataTypes.TEXT,
     allowNull: true
-  },
-  score: {
-    type: DataTypes.DOUBLE,
-    allowNull: true
   }
 }, {
   tableName: 'reviews',

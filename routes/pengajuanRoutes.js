@@ -14,6 +14,7 @@ const {
 const { verifyToken } = require('../middleware/authMiddleware');
 const { isMahasiswa } = require('../middleware/roleMiddleware');
 const upload = require('../middleware/uploadMiddleware');
+const { downloadSubmissionFile } = require('../controllers/fileController');
 
 // Rute ini dibaca: 
 // 1. Wajib Login (verifyToken)
@@ -24,6 +25,9 @@ router.post('/', verifyToken, isMahasiswa, upload.single('file_pendukung'), ajuk
 
 // Dapatkan daftar pengajuan (role-aware)
 router.get('/', verifyToken, listSubmissions);
+
+// Download file pendukung yang tersimpan di kolom pengajuan.file_pendukung
+router.get('/:id/file-pendukung/download', verifyToken, downloadSubmissionFile);
 
 // Dapatkan detail pengajuan
 router.get('/:id', verifyToken, getSubmission);

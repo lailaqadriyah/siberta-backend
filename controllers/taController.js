@@ -66,21 +66,4 @@ const tambahData = async (req, res) => {
     }
 };
 
-const syncData = async (req, res) => {
-    try {
-        const mlRes = await axios.get(`${ML_URL}/sync`);
-
-        return res.status(200).json({
-            pesan: 'Sinkronisasi berhasil.',
-            total_data: mlRes.data.total_data,
-        });
-    } catch (error) {
-        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
-            return res.status(503).json({ pesan: 'ML Service tidak tersedia.' });
-        }
-        console.error(error);
-        return res.status(500).json({ pesan: 'Terjadi kesalahan pada server.' });
-    }
-};
-
-module.exports = { cekKemiripan, tambahData, syncData };
+module.exports = { cekKemiripan, tambahData };
